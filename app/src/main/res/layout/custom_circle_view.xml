@@ -10,9 +10,9 @@
 
     <com.example.customview.hmm1.CustomImageView
         android:id="@+id/img_control"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:padding="16dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:padding="9dp"
         android:background="@color/black"
         android:src="@drawable/ic_camera"/>
 </merge>
