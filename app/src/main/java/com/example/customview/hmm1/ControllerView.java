@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -11,11 +12,9 @@ import androidx.cardview.widget.CardView;
 
 import com.example.customview.R;
 
-public class ControllerView extends CardView {
+public class ControllerView extends RelativeLayout {
 
-    private CustomImageView img;
-    private float dX, dY;
-
+    private ImageView img;
     public ControllerView(Context context) {
         this(context, null);
     }
@@ -32,7 +31,8 @@ public class ControllerView extends CardView {
     }
 
     public void init(Context context,View view) {
-        img = findViewById(R.id.img_control);
+        img = findViewById(R.id.img_view_action);
+
     }
 
     @Override
@@ -41,7 +41,11 @@ public class ControllerView extends CardView {
         doSomething();
         return true;
     }
+
+
     private void doSomething() {
         Toast.makeText(getContext(), "did something", Toast.LENGTH_SHORT).show();
     }
+
+
 }

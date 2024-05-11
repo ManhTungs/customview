@@ -42,7 +42,7 @@ public class MyService extends Service implements View.OnTouchListener {
     WindowManager windowManager;
     WindowManager.LayoutParams layoutParams, layoutParams1, layoutParams2, layoutParams3, layoutParams4;
     ControllerView controllerView;
-    private ControllerView controllerView1, controllerView2, controllerView3, controllerView4;
+    private ActionView controllerView1, controllerView2, controllerView3, controllerView4;
     public static final String CHANNEL_ID = "record_channel";
     private static CharSequence CHANNEL_NAME = "record_channel_name";
     public static final int NOTIFICATION_ID = 1;
@@ -80,10 +80,15 @@ public class MyService extends Service implements View.OnTouchListener {
     }
 
     private void initOptionController() {
-        controllerView1 = new ControllerView(this);
-        controllerView2 = new ControllerView(this);
-        controllerView3 = new ControllerView(this);
-        controllerView4 = new ControllerView(this);
+        controllerView1 = new ActionView(this);
+        controllerView2 = new ActionView(this);
+        controllerView3 = new ActionView(this);
+        controllerView4 = new ActionView(this);
+
+        controllerView1.setImage(R.drawable.ic_record);
+        controllerView2.setImage(R.drawable.ic_face_cam);
+        controllerView3.setImage(R.drawable.ic_screen_shot);
+        controllerView4.setImage(R.drawable.ic_brush);
 
         //layout param1
         layoutParams1 = new WindowManager.LayoutParams(
@@ -170,7 +175,6 @@ public class MyService extends Service implements View.OnTouchListener {
         layoutParams4.flags |= WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
         layoutParams4.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
         layoutParams4.gravity = Gravity.TOP | Gravity.START;
-
     }
 
     private void initRlOverlayParams() {
@@ -208,6 +212,7 @@ public class MyService extends Service implements View.OnTouchListener {
 
     private void initControllerParams() {
         controllerView = new ControllerView(this);
+
         layoutParams = new WindowManager.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
@@ -285,17 +290,18 @@ public class MyService extends Service implements View.OnTouchListener {
                         layoutParams4.y = (int) (layoutParams.y + 200);
 
                         windowManager.addView(controllerView4, layoutParams4);
+
                     }else {
                         layoutParams1.x = layoutParams.x;
                         layoutParams1.y = layoutParams.y - 200;
                         windowManager.addView(controllerView1, layoutParams1);
 
-                        layoutParams2.x = (int) (layoutParams.x + (200 * ((Math.sqrt(2) / 2))));
+                        layoutParams2.x = (int) (layoutParams.x - (200 * ((Math.sqrt(2) / 2))));
                         layoutParams2.y = (int) (layoutParams.y - (200 * ((Math.sqrt(2) / 2))));
 
                         windowManager.addView(controllerView2, layoutParams2);
 
-                        layoutParams3.x = (int) (layoutParams.x + (200 * ((Math.sqrt(2) / 2))));
+                        layoutParams3.x = (int) (layoutParams.x - (200 * ((Math.sqrt(2) / 2))));
                         layoutParams3.y = (int) (layoutParams.y + (200 * ((Math.sqrt(2) / 2))));
 
                         windowManager.addView(controllerView3, layoutParams3);
