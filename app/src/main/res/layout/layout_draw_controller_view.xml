@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    tools:parentTag="android.widget.FrameLayout">
+
+    <com.divyanshu.draw.widget.DrawView
+        android:id="@+id/draw_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+    <LinearLayout
+        android:id="@+id/draw_controller"
+        android:layout_width="wrap_content"
+        android:orientation="vertical"
+        android:layout_height="wrap_content">
+        <ImageView
+            android:id="@+id/ic_cancel"
+            android:src="@drawable/ic_cancel_black"
+            android:background="@drawable/bg_view_action"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:padding="9dp"
+            android:layout_gravity="end"
+            android:backgroundTint="@color/color_orange_primary_overlay"
+            android:layout_marginBottom="5dp"/>
+        <LinearLayout
+            android:background="@color/color_orange_primary_overlay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <ImageView
+                android:id="@+id/ic_undo"
+                android:layout_margin="10dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_undo"/>
+            <ImageView
+                android:id="@+id/ic_redo"
+                android:layout_margin="10dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_redo"/>
+            <ImageView
+                android:id="@+id/ic_eraser"
+                android:layout_margin="10dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_eraser"/>
+            <ImageView
+                android:id="@+id/ic_multi_color"
+                android:layout_margin="10dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_multi_color"/>
+            <ImageView
+                android:id="@+id/ic_pensize"
+                android:layout_margin="10dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_pensize"/>
+        </LinearLayout>
+    </LinearLayout>
+
+
+
+
+
+
+</merge>
