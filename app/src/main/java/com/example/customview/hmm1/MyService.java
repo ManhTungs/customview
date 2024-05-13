@@ -1,31 +1,43 @@
 package com.example.customview.hmm1;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.utils.widget.ImageFilterView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import com.divyanshu.draw.widget.DrawView;
 import com.example.customview.R;
+import com.skydoves.colorpickerview.ColorEnvelope;
+import com.skydoves.colorpickerview.ColorPickerView;
+import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener;
 
 public class MyService extends Service implements View.OnTouchListener {
     private static final int CONTROLLER_SELECTING = 1, CONTROLLER_NON_SELECT = 2;
@@ -40,12 +52,14 @@ public class MyService extends Service implements View.OnTouchListener {
     int initialTouchY;
     RelativeLayout rlOverlay;
     WindowManager windowManager;
-    WindowManager.LayoutParams layoutParams, layoutParams1, layoutParams2, layoutParams3, layoutParams4;
+    WindowManager.LayoutParams layoutParams, layoutParams1, layoutParams2, layoutParams3, layoutParams4, drawControllerLayoutParam,colorPickerLayoutParam;
+    DrawControllerView drawControllerView;
     ControllerView controllerView;
     private ActionView controllerView1, controllerView2, controllerView3, controllerView4;
     public static final String CHANNEL_ID = "record_channel";
     private static CharSequence CHANNEL_NAME = "record_channel_name";
     public static final int NOTIFICATION_ID = 1;
+
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -72,10 +86,121 @@ public class MyService extends Service implements View.OnTouchListener {
         dXMax = displayMetrics.widthPixels;
         dYMAX = displayMetrics.heightPixels;
         initControllerParams();
-        initRlOverlayParams();
         initOptionController();
-
+        initDrawController();
+        initColorPickerParams();
         initOnClick();
+    }
+
+    private void initColorPickerParams() {
+        colorPickerLayoutParam = new WindowManager.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                PixelFormat.TRANSLUCENT
+        );
+
+        colorPickerLayoutParam.format = PixelFormat.TRANSLUCENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            colorPickerLayoutParam.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            colorPickerLayoutParam.type = WindowManager.LayoutParams.TYPE_PHONE;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            colorPickerLayoutParam.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+        }
+        colorPickerLayoutParam.gravity = Gravity.BOTTOM;
+        colorPickerLayoutParam.flags |= WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
+        colorPickerLayoutParam.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+
+    }
+
+
+    @SuppressLint("ClickableViewAccessibility")
+    private void initDrawController() {
+        drawControllerView = new DrawControllerView(this);
+
+        drawControllerLayoutParam = new WindowManager.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                PixelFormat.TRANSLUCENT
+        );
+
+        drawControllerLayoutParam.format = PixelFormat.TRANSLUCENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            drawControllerLayoutParam.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            drawControllerLayoutParam.type = WindowManager.LayoutParams.TYPE_PHONE;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            drawControllerLayoutParam.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+        }
+        drawControllerLayoutParam.gravity = Gravity.TOP | Gravity.START;
+        drawControllerLayoutParam.flags = WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
+        drawControllerLayoutParam.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+        drawControllerLayoutParam.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
+
+        drawControllerView.getImgCancel().setOnClickListener(v -> {
+            windowManager.removeView(drawControllerView);
+        });
+        drawControllerView.getImgUndo().setOnClickListener(v -> {
+            drawControllerView.getDrawView().undo();
+        });
+        drawControllerView.getImgRedo().setOnClickListener(v -> {
+            drawControllerView.getDrawView().redo();
+
+        });
+        drawControllerView.getImgEraser().setOnClickListener(v -> {
+            drawControllerView.getDrawView().clearCanvas();
+
+        });
+        drawControllerView.getImgMultiColor().setOnClickListener(v -> {
+            LayoutInflater layoutInflater=(LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            View view=layoutInflater.inflate(R.layout.layout_bottom_sheet_color_picker, null);
+            windowManager.addView(view,colorPickerLayoutParam);
+
+            initViewColorPicker(view);
+
+        });
+        drawControllerView.getImgPenSize().setOnClickListener(v -> {
+
+        });
+
+
+
+    }
+
+    private void initViewColorPicker(View view) {
+        View colorRed,colorYellow,colorGreen,colorCyan,colorViolet,colorWhite,colorBlack;
+        ColorPickerView colorPicker;
+        ImageView multiColor;
+        multiColor=view.findViewById(R.id.view_color_picker);
+        colorRed=view.findViewById(R.id.view_color_red);
+        colorYellow=view.findViewById(R.id.view_color_yellow);
+        colorGreen=view.findViewById(R.id.view_color_green);
+        colorCyan=view.findViewById(R.id.view_color_cyan);
+        colorViolet=view.findViewById(R.id.view_color_violet);
+        colorWhite=view.findViewById(R.id.view_color_white);
+        colorBlack=view.findViewById(R.id.view_color_black);
+        colorPicker=view.findViewById(R.id.color_picker_view);
+
+        colorRed.setBackgroundTintList(ColorStateList.valueOf(Color.RED));
+        colorYellow.setBackgroundTintList(ColorStateList.valueOf(Color.YELLOW));
+        colorGreen.setBackgroundTintList(ColorStateList.valueOf(Color.GREEN));
+        colorCyan.setBackgroundTintList(ColorStateList.valueOf(Color.CYAN));
+        colorViolet.setBackgroundTintList(ColorStateList.valueOf(Color.BLUE));
+        colorWhite.setBackgroundTintList(ColorStateList.valueOf(Color.WHITE));
+        colorBlack.setBackgroundTintList(ColorStateList.valueOf(Color.BLACK));
+
+        multiColor.setImageResource(R.drawable.ic_multi_color);
+
+        colorPicker.setColorListener(new ColorEnvelopeListener() {
+            @Override
+            public void onColorSelected(ColorEnvelope envelope, boolean fromUser) {
+
+            }
+        });
 
     }
 
@@ -175,38 +300,7 @@ public class MyService extends Service implements View.OnTouchListener {
         layoutParams4.flags |= WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
         layoutParams4.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
         layoutParams4.gravity = Gravity.TOP | Gravity.START;
-    }
 
-    private void initRlOverlayParams() {
-
-
-        /*controllerView1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.e("dfdf", "onClick: option1" );
-            }
-        });
-        controllerView2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.e("dfdf", "onClick: option2" );
-
-            }
-        });
-        controllerView3.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.e("dfdf", "onClick: option3" );
-
-            }
-        });
-        controllerView4.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.e("dfdf", "onClick: option4" );
-
-            }
-        });*/
 
     }
 
@@ -271,18 +365,18 @@ public class MyService extends Service implements View.OnTouchListener {
                     windowManager.addView(rlOverlay, layoutParamsOverlay);
                     windowManager.addView(controllerView, layoutParams);
 
-                    if (CONTROLLER_STATE_POSITION==LEFT){
+                    if (CONTROLLER_STATE_POSITION == LEFT) {
                         layoutParams1.x = layoutParams.x;
                         layoutParams1.y = layoutParams.y - 200;
                         windowManager.addView(controllerView1, layoutParams1);
 
-                        layoutParams2.x = (int) (layoutParams.x + (200 * ((Math.sqrt(2) / 2))));
-                        layoutParams2.y = (int) (layoutParams.y - (200 * ((Math.sqrt(2) / 2))));
+                        layoutParams2.x = (int) (layoutParams.x + (200 * ((Math.sqrt(3) / 2))));
+                        layoutParams2.y = (int) (layoutParams.y - (200 * ((Math.sqrt(3) / 2))));
 
                         windowManager.addView(controllerView2, layoutParams2);
 
-                        layoutParams3.x = (int) (layoutParams.x + (200 * ((Math.sqrt(2) / 2))));
-                        layoutParams3.y = (int) (layoutParams.y + (200 * ((Math.sqrt(2) / 2))));
+                        layoutParams3.x = (int) (layoutParams.x + (200 * ((Math.sqrt(3) / 2))));
+                        layoutParams3.y = (int) (layoutParams.y + (200 * ((Math.sqrt(3) / 2))));
 
                         windowManager.addView(controllerView3, layoutParams3);
 
@@ -291,18 +385,18 @@ public class MyService extends Service implements View.OnTouchListener {
 
                         windowManager.addView(controllerView4, layoutParams4);
 
-                    }else {
+                    } else {
                         layoutParams1.x = layoutParams.x;
                         layoutParams1.y = layoutParams.y - 200;
                         windowManager.addView(controllerView1, layoutParams1);
 
-                        layoutParams2.x = (int) (layoutParams.x - (200 * ((Math.sqrt(2) / 2))));
-                        layoutParams2.y = (int) (layoutParams.y - (200 * ((Math.sqrt(2) / 2))));
+                        layoutParams2.x = (int) (layoutParams.x - (200 * ((Math.sqrt(3) / 2))));
+                        layoutParams2.y = (int) (layoutParams.y - (200 * ((Math.sqrt(3) / 2))));
 
                         windowManager.addView(controllerView2, layoutParams2);
 
-                        layoutParams3.x = (int) (layoutParams.x - (200 * ((Math.sqrt(2) / 2))));
-                        layoutParams3.y = (int) (layoutParams.y + (200 * ((Math.sqrt(2) / 2))));
+                        layoutParams3.x = (int) (layoutParams.x - (200 * ((Math.sqrt(3) / 2))));
+                        layoutParams3.y = (int) (layoutParams.y + (200 * ((Math.sqrt(3) / 2))));
 
                         windowManager.addView(controllerView3, layoutParams3);
 
@@ -311,7 +405,6 @@ public class MyService extends Service implements View.OnTouchListener {
 
                         windowManager.addView(controllerView4, layoutParams4);
                     }
-
 
 
                 } else {
@@ -337,7 +430,39 @@ public class MyService extends Service implements View.OnTouchListener {
                 });
             }
         });
+        controllerView1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.e("dfdf", "onClick: option1");
+            }
+        });
+        controllerView2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.e("dfdf", "onClick: option2");
 
+            }
+        });
+        controllerView3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.e("dfdf", "onClick: option3");
+
+            }
+        });
+        controllerView4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                CONTROLLER_STATE = CONTROLLER_NON_SELECT;
+                windowManager.removeView(rlOverlay);
+                windowManager.removeView(controllerView1);
+                windowManager.removeView(controllerView2);
+                windowManager.removeView(controllerView3);
+                windowManager.removeView(controllerView4);
+                windowManager.addView(drawControllerView, drawControllerLayoutParam);
+
+            }
+        });
 
     }
 
@@ -377,70 +502,34 @@ public class MyService extends Service implements View.OnTouchListener {
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                initialX = layoutParams.x;
-                initialY = layoutParams.y;
-                initialTouchX = (int) event.getRawX();
-                initialTouchY = (int) event.getRawY();
-                break;
-            case MotionEvent.ACTION_UP:
-                if (event.getRawX() >= dXMax / 2) {
-                    CONTROLLER_STATE_POSITION=RIGHT;
-                    layoutParams.x = dXMax - v.getWidth();
-                    windowManager.updateViewLayout(controllerView, layoutParams);
-                } else {
-                    CONTROLLER_STATE_POSITION=LEFT;
-                    layoutParams.x =1;
-                    windowManager.updateViewLayout(controllerView, layoutParams);
+        int id = v.getId();
 
-                }
-//                    if (event.getRawY()>=dYMAX/2){
-//                        if (event.getRawY()-(dYMAX/2)<event.getRawX()-(dXMax/2)){
-//                            layoutParams.y=dYMAX;
-//                            windowManager.updateViewLayout(controllerView, layoutParams);
-//                        }else {
-//                            layoutParams.x= dXMax-v.getWidth();
-//                            windowManager.updateViewLayout(controllerView, layoutParams);
-//                        }
-//                    }else {
-//                        if (event.getRawY()<=event.getRawX()-(dXMax/2)){
-//                            layoutParams.y=1;
-//                            windowManager.updateViewLayout(controllerView, layoutParams);
-//                        }else {
-//                            layoutParams.x=dXMax-v.getWidth();
-//                            windowManager.updateViewLayout(controllerView, layoutParams);
-//                        }
-//                    }
-//                } else {
-//
-//                    if (event.getRawY()>=dYMAX/2){
-//                        Log.e("dfdf", "onTouch: left bot" );
-//                        if (((dYMAX)-event.getRawY())<event.getRawX()){
-//                            layoutParams.y=dYMAX-v.getHeight();
-//                            windowManager.updateViewLayout(controllerView, layoutParams);
-//                        }else {
-//                            layoutParams.x= 1;
-//                            windowManager.updateViewLayout(controllerView, layoutParams);
-//                        }
-//                    }else {
-//                        Log.e("dfdf", "onTouch: left tp[" );
-//
-//                        if ((event.getRawY())<event.getRawX()){
-//                            layoutParams.y=1;
-//                            windowManager.updateViewLayout(controllerView, layoutParams);
-//                        }else {
-//                            layoutParams.x=1;
-//                            windowManager.updateViewLayout(controllerView, layoutParams);
-//                        }
-//
-                break;
-            case MotionEvent.ACTION_MOVE:
-                layoutParams.x = initialX + (int) (event.getRawX() - initialTouchX);
-                layoutParams.y = initialY + (int) (event.getRawY() - initialTouchY);
-                windowManager.updateViewLayout(controllerView, layoutParams);
-                break;
-        }
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    initialX = layoutParams.x;
+                    initialY = layoutParams.y;
+                    initialTouchX = (int) event.getRawX();
+                    initialTouchY = (int) event.getRawY();
+                    break;
+                case MotionEvent.ACTION_UP:
+                    if (event.getRawX() >= dXMax / 2) {
+                        CONTROLLER_STATE_POSITION = RIGHT;
+                        layoutParams.x = dXMax - v.getWidth();
+                        windowManager.updateViewLayout(controllerView, layoutParams);
+                    } else {
+                        CONTROLLER_STATE_POSITION = LEFT;
+                        layoutParams.x = 1;
+                        windowManager.updateViewLayout(controllerView, layoutParams);
+                    }
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    layoutParams.x = initialX + (int) (event.getRawX() - initialTouchX);
+                    layoutParams.y = initialY + (int) (event.getRawY() - initialTouchY);
+                    windowManager.updateViewLayout(controllerView, layoutParams);
+                    break;
+            }
+
+
         return false;
 
     }
