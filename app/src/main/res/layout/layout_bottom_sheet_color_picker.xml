@@ -1,90 +1,160 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="@color/color_overlay"
-    android:orientation="vertical">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <ImageView
-        android:id="@+id/img_done"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
-        android:layout_gravity="end"
-        android:src="@drawable/ic_done" />
+    <data>
+
+    </data>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="8">
-
-        <View
-            android:id="@+id/view_color_red"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:background="@drawable/bg_view_action" />
-
-        <View
-            android:id="@+id/view_color_yellow"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:layout_marginStart="10dp"
-            android:background="@drawable/bg_view_action" />
-
-        <View
-            android:id="@+id/view_color_green"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:layout_marginStart="10dp"
-            android:background="@drawable/bg_view_action" />
-
-        <View
-            android:id="@+id/view_color_cyan"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:layout_marginStart="10dp"
-            android:background="@drawable/bg_view_action" />
-
-        <View
-            android:id="@+id/view_color_violet"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:layout_marginStart="10dp"
-            android:background="@drawable/bg_view_action" />
-
-        <View
-            android:id="@+id/view_color_white"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:layout_marginStart="10dp"
-            android:background="@drawable/bg_view_action" />
-
-        <View
-            android:id="@+id/view_color_black"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:layout_marginStart="10dp"
-            android:background="@drawable/bg_view_action" />
+        android:orientation="vertical">
 
         <ImageView
-            android:id="@+id/view_color_picker"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:layout_marginStart="10dp"
-            android:background="@drawable/bg_view_action" />
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="20dp"
+            android:id="@+id/img_done"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="end"
+            android:src="@drawable/ic_done" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="20dp"
+            android:weightSum="8">
+
+            <FrameLayout
+                android:backgroundTint="@color/color_transparent"
+                android:id="@+id/fr_stroke_red"
+                android:background="@drawable/bg_view_action"
+                android:layout_width="35dp"
+                android:layout_marginStart="10dp"
+                android:padding="3dp"
+                android:layout_height="35dp">
+                <View
+                    android:id="@+id/view_color_red"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_view_action" />
+
+            </FrameLayout>
+            <FrameLayout
+                android:backgroundTint="@color/color_transparent"
+                android:id="@+id/fr_stroke_yellow"
+                android:background="@drawable/bg_view_action"
+                android:layout_width="35dp"
+                android:layout_marginStart="10dp"
+                android:padding="3dp"
+                android:layout_height="35dp">
+                <View
+                    android:id="@+id/view_color_yellow"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_view_action" />
+            </FrameLayout>
+            <FrameLayout
+                android:backgroundTint="@color/color_transparent"
+                android:id="@+id/fr_stroke_green"
+                android:background="@drawable/bg_view_action"
+                android:layout_width="35dp"
+                android:layout_marginStart="10dp"
+                android:padding="3dp"
+                android:layout_height="35dp">
+                <View
+                    android:id="@+id/view_color_green"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_view_action" />
+            </FrameLayout>
+            <FrameLayout
+                android:backgroundTint="@color/color_transparent"
+                android:id="@+id/fr_stroke_cyan"
+                android:background="@drawable/bg_view_action"
+                android:layout_width="35dp"
+                android:layout_marginStart="10dp"
+                android:padding="3dp"
+                android:layout_height="35dp">
+                <View
+                    android:id="@+id/view_color_cyan"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_view_action" />
+            </FrameLayout>
+            <FrameLayout
+                android:backgroundTint="@color/color_transparent"
+                android:id="@+id/fr_stroke_violet"
+                android:background="@drawable/bg_view_action"
+                android:layout_width="35dp"
+                android:layout_marginStart="10dp"
+                android:padding="3dp"
+                android:layout_height="35dp">
+                <View
+                    android:id="@+id/view_color_violet"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_view_action" />
+            </FrameLayout>
+            <FrameLayout
+                android:backgroundTint="@color/color_transparent"
+                android:id="@+id/fr_stroke_white"
+                android:background="@drawable/bg_view_action"
+                android:layout_width="35dp"
+                android:layout_marginStart="10dp"
+                android:padding="3dp"
+                android:layout_height="35dp">
+
+                <View
+                    android:id="@+id/view_color_white"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_view_action" />
+            </FrameLayout>
+            <FrameLayout
+                android:id="@+id/fr_stroke_black"
+                android:background="@drawable/bg_view_action"
+                android:backgroundTint="@color/color_transparent"
+                android:layout_width="35dp"
+                android:layout_marginStart="10dp"
+                android:padding="3dp"
+                android:layout_height="35dp">
+                <View
+                    android:id="@+id/view_color_black"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_view_action" />
+            </FrameLayout>
+            <FrameLayout
+                android:id="@+id/fr_stroke_color_picker"
+                android:background="@drawable/bg_view_action"
+                android:backgroundTint="@color/color_transparent"
+                android:layout_width="35dp"
+                android:layout_marginStart="10dp"
+                android:padding="3dp"
+                android:layout_height="35dp">
+                <ImageView
+                    android:id="@+id/view_color_picker"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_view_action" />
+            </FrameLayout>
+
+        </LinearLayout>
+
+        <com.skydoves.colorpickerview.ColorPickerView
+            android:visibility="gone"
+            android:id="@+id/color_picker_view"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="20dp"
+            app:palette="@drawable/img_color_picker"
+            app:selector="@drawable/colorpickerview_wheel"
+            app:selector_alpha="0.3"
+            app:selector_size="5dp" />
+
     </LinearLayout>
-
-    <com.skydoves.colorpickerview.ColorPickerView
-        android:id="@+id/color_picker_view"
-        android:layout_width="300dp"
-        android:layout_height="300dp"
-        android:layout_gravity="center"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
-        app:palette="@drawable/img_color_picker"
-        app:selector="@drawable/colorpickerview_wheel"
-        app:selector_alpha="0.3"
-        app:selector_size="5dp" />
-
-</LinearLayout>
+</layout>

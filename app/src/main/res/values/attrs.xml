@@ -19,5 +19,6 @@
 
         <attr name="clockwise" format="boolean" />
         <attr name="enabled" format="boolean" />
+        <attr name="colorSurface" format="color"/>
     </declare-styleable>
 </resources>

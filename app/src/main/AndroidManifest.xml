@@ -3,10 +3,17 @@
     xmlns:tools="http://schemas.android.com/tools">
 
 
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
     <uses-permission android:name="android.permission.ACTION_MANAGE_OVERLAY_PERMISSION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
 
     <application
         android:allowBackup="true"
@@ -29,7 +36,7 @@
         </activity>
 
         <service android:name=".hmm1.MyService"
-            android:foregroundServiceType="mediaProjection"/>
+            android:foregroundServiceType="mediaProjection" />
     </application>
 
 </manifest>

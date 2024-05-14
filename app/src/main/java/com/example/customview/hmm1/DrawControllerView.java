@@ -1,4 +1,5 @@
 package com.example.customview.hmm1;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
@@ -8,9 +9,8 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 
-import com.divyanshu.draw.widget.DrawView;
+import com.byox.drawview.views.DrawView;
 import com.example.customview.R;
 
 
@@ -19,7 +19,7 @@ public class DrawControllerView extends FrameLayout {
     private int deltaX, deltaY;
     private LinearLayout drawController;
     private DrawView drawView;
-    private ImageView imgCancel,imgUndo,imgRedo,imgEraser,imgMultiColor,imgPenSize;
+    private ImageView imgCancel,imgUndo,imgRedo,imgEraser,imgMultiColor,imgPenSize,imgBrush,imgRectangle,imgCircle,imgClean, imgAlpha;
     public DrawControllerView(Context context) {
         this(context, null);
     }
@@ -46,7 +46,11 @@ public class DrawControllerView extends FrameLayout {
         imgPenSize = findViewById(R.id.ic_pensize);
         drawController = findViewById(R.id.draw_controller);
         drawView = findViewById(R.id.draw_view);
-
+        imgBrush=findViewById(R.id.ic_pen);
+        imgRectangle=findViewById(R.id.ic_retangle);
+        imgCircle=findViewById(R.id.ic_circle);
+        imgClean=findViewById(R.id.ic_clear);
+        imgAlpha =findViewById(R.id.ic_opacity);
 
         drawController.setOnTouchListener(new OnTouchListener() {
             @Override
@@ -110,6 +114,26 @@ public class DrawControllerView extends FrameLayout {
 
     public DrawView getDrawView() {
         return drawView;
+    }
+
+    public ImageView getImgBrush() {
+        return imgBrush;
+    }
+
+    public ImageView getImgRectangle() {
+        return imgRectangle;
+    }
+
+    public ImageView getImgCircle() {
+        return imgCircle;
+    }
+
+    public ImageView getImgClean() {
+        return imgClean;
+    }
+
+    public ImageView getImgAlpha() {
+        return imgAlpha;
     }
 
     @Override

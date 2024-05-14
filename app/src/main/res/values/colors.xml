@@ -7,6 +7,8 @@
     <color name="color_orange_primary_overlay">#66F16F47</color>
     <color name="color_transparent">#00F16F47</color>
     <color name="color_overlay">#80000000</color>
+    <color name="colorSurface">@color/color_orange_primary</color>
+    <color name="color_gray_stroke">#707070</color>
 
 
 </resources>

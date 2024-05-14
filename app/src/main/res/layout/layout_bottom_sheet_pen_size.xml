@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+    </data>
+
+    <LinearLayout
+        android:padding="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <!--        <FrameLayout-->
+        <!--            android:layout_width="50dp"-->
+        <!--            android:background="@drawable/bg_view_action"-->
+        <!--            android:backgroundTint="@color/color_overlay"-->
+        <!--            android:layout_gravity="center"-->
+        <!--            android:layout_height="50dp">-->
+        <!--            <View-->
+        <!--                android:layout_width=""-->
+        <!--                android:layout_height="100dp"-->
+        <!--               />-->
+        <!--        </FrameLayout>-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="size"
+                android:textSize="16sp" />
+
+            <com.warkiz.widget.IndicatorSeekBar
+                android:id="@+id/seekbar_of_fragment_edit_watermark"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:visibility="visible"
+                app:isb_max="100"
+                app:isb_min="0"
+                app:isb_progress="50"
+                app:isb_show_indicator="none"
+                app:isb_thumb_color="@color/color_orange_primary"
+                app:isb_thumb_size="15dp"
+                app:isb_tick_marks_size="20dp"
+                app:isb_track_background_color="#D9D9D9"
+                app:isb_track_background_size="7dp"
+                app:isb_track_progress_color="@color/color_orange_primary"
+                app:isb_track_progress_size="8dp"
+                app:isb_track_rounded_corners="true" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</layout>

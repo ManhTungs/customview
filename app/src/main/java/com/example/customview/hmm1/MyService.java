@@ -17,33 +17,34 @@ import android.os.Build;
 import android.os.IBinder;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.utils.widget.ImageFilterView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
-import com.divyanshu.draw.widget.DrawView;
+import com.byox.drawview.enums.DrawingMode;
+import com.byox.drawview.enums.DrawingTool;
 import com.example.customview.R;
 import com.skydoves.colorpickerview.ColorEnvelope;
-import com.skydoves.colorpickerview.ColorPickerView;
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener;
 
 public class MyService extends Service implements View.OnTouchListener {
+    private static final int COLOR_RED = 1, COLOR_YELLOW = 2, COLOR_GREEN = 3, COLOR_BLUE = 4, COLOR_WHITE = 5, COLOR_BLACK = 6, COLOR_CYAN = 7, COLOR_PICKER = 8;
+    private static int CURRENT_COLOR_DRAW = COLOR_BLACK;
+    private static int PRE_COLOR = COLOR_BLACK;
     private static final int CONTROLLER_SELECTING = 1, CONTROLLER_NON_SELECT = 2;
     private static final int LEFT = 1, RIGHT = 2, TOP = 3, BOTTOM = 4;
     private static int CONTROLLER_STATE_POSITION = LEFT;
     private static int CONTROLLER_STATE = 2;
+    private BottomSheetColorPicker bottomSheetColorPicker;
     int dXMax;
     int dYMAX;
     int initialX;
@@ -52,7 +53,7 @@ public class MyService extends Service implements View.OnTouchListener {
     int initialTouchY;
     RelativeLayout rlOverlay;
     WindowManager windowManager;
-    WindowManager.LayoutParams layoutParams, layoutParams1, layoutParams2, layoutParams3, layoutParams4, drawControllerLayoutParam,colorPickerLayoutParam;
+    WindowManager.LayoutParams layoutParams, layoutParams1, layoutParams2, layoutParams3, layoutParams4, drawControllerLayoutParam, colorPickerLayoutParam;
     DrawControllerView drawControllerView;
     ControllerView controllerView;
     private ActionView controllerView1, controllerView2, controllerView3, controllerView4;
@@ -118,7 +119,10 @@ public class MyService extends Service implements View.OnTouchListener {
 
     @SuppressLint("ClickableViewAccessibility")
     private void initDrawController() {
-        drawControllerView = new DrawControllerView(this);
+        if (drawControllerView==null){
+            drawControllerView = new DrawControllerView(this);
+            drawControllerView.getDrawView().setDrawColor(Color.BLACK);
+        }
 
         drawControllerLayoutParam = new WindowManager.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT,
@@ -141,64 +145,128 @@ public class MyService extends Service implements View.OnTouchListener {
         drawControllerLayoutParam.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
         drawControllerLayoutParam.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
 
+
         drawControllerView.getImgCancel().setOnClickListener(v -> {
             windowManager.removeView(drawControllerView);
         });
+
         drawControllerView.getImgUndo().setOnClickListener(v -> {
             drawControllerView.getDrawView().undo();
         });
         drawControllerView.getImgRedo().setOnClickListener(v -> {
             drawControllerView.getDrawView().redo();
-
         });
         drawControllerView.getImgEraser().setOnClickListener(v -> {
-            drawControllerView.getDrawView().clearCanvas();
-
+            drawControllerView.getDrawView().setDrawingMode(DrawingMode.ERASER);
         });
         drawControllerView.getImgMultiColor().setOnClickListener(v -> {
-            LayoutInflater layoutInflater=(LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            View view=layoutInflater.inflate(R.layout.layout_bottom_sheet_color_picker, null);
-            windowManager.addView(view,colorPickerLayoutParam);
-
-            initViewColorPicker(view);
-
+            if (bottomSheetColorPicker==null){
+                Context context = new ContextThemeWrapper(this, R.style.Theme_Customview);
+                bottomSheetColorPicker = new BottomSheetColorPicker(context);
+                bottomSheetColorPicker.show();
+                initViewColorPicker(bottomSheetColorPicker);
+            }else {
+                bottomSheetColorPicker.show();
+            }
         });
         drawControllerView.getImgPenSize().setOnClickListener(v -> {
+//            drawControllerView.getDrawView().setDrawWidth(100);
+        });
+        drawControllerView.getImgBrush().setOnClickListener(v -> {
+            drawControllerView.getDrawView().setDrawingMode(DrawingMode.DRAW);
+            drawControllerView.getDrawView().setDrawingTool(DrawingTool.PEN);
 
         });
+        drawControllerView.getImgRectangle().setOnClickListener(v -> {
+            drawControllerView.getDrawView().setDrawingTool(DrawingTool.RECTANGLE);
 
+        });
+        drawControllerView.getImgCircle().setOnClickListener(v -> {
+            drawControllerView.getDrawView().setDrawingTool(DrawingTool.CIRCLE);
+        });
+        drawControllerView.getImgClean().setOnClickListener(v -> {
+            drawControllerView.getDrawView().restartDrawing();
+        });
+        drawControllerView.getImgAlpha().setOnClickListener(v -> {
+//            drawControllerView.getDrawView().cam
+//            drawControllerView.getDrawView().setDrawAlpha();
 
+        });
 
     }
 
-    private void initViewColorPicker(View view) {
-        View colorRed,colorYellow,colorGreen,colorCyan,colorViolet,colorWhite,colorBlack;
-        ColorPickerView colorPicker;
-        ImageView multiColor;
-        multiColor=view.findViewById(R.id.view_color_picker);
-        colorRed=view.findViewById(R.id.view_color_red);
-        colorYellow=view.findViewById(R.id.view_color_yellow);
-        colorGreen=view.findViewById(R.id.view_color_green);
-        colorCyan=view.findViewById(R.id.view_color_cyan);
-        colorViolet=view.findViewById(R.id.view_color_violet);
-        colorWhite=view.findViewById(R.id.view_color_white);
-        colorBlack=view.findViewById(R.id.view_color_black);
-        colorPicker=view.findViewById(R.id.color_picker_view);
+    private void initViewColorPicker(BottomSheetColorPicker bottomSheetColorPicker) {
+        bottomSheetColorPicker.getViewBinding().viewColorRed.setBackgroundTintList(ColorStateList.valueOf(Color.RED));
+        bottomSheetColorPicker.getViewBinding().viewColorYellow.setBackgroundTintList(ColorStateList.valueOf(Color.YELLOW));
+        bottomSheetColorPicker.getViewBinding().viewColorGreen.setBackgroundTintList(ColorStateList.valueOf(Color.GREEN));
+        bottomSheetColorPicker.getViewBinding().viewColorCyan.setBackgroundTintList(ColorStateList.valueOf(Color.CYAN));
+        bottomSheetColorPicker.getViewBinding().viewColorViolet.setBackgroundTintList(ColorStateList.valueOf(Color.BLUE));
+        bottomSheetColorPicker.getViewBinding().viewColorWhite.setBackgroundTintList(ColorStateList.valueOf(Color.WHITE));
+        bottomSheetColorPicker.getViewBinding().viewColorBlack.setBackgroundTintList(ColorStateList.valueOf(Color.BLACK));
+        bottomSheetColorPicker.getViewBinding().viewColorPicker.setImageResource(R.drawable.ic_multi_color);
 
-        colorRed.setBackgroundTintList(ColorStateList.valueOf(Color.RED));
-        colorYellow.setBackgroundTintList(ColorStateList.valueOf(Color.YELLOW));
-        colorGreen.setBackgroundTintList(ColorStateList.valueOf(Color.GREEN));
-        colorCyan.setBackgroundTintList(ColorStateList.valueOf(Color.CYAN));
-        colorViolet.setBackgroundTintList(ColorStateList.valueOf(Color.BLUE));
-        colorWhite.setBackgroundTintList(ColorStateList.valueOf(Color.WHITE));
-        colorBlack.setBackgroundTintList(ColorStateList.valueOf(Color.BLACK));
 
-        multiColor.setImageResource(R.drawable.ic_multi_color);
+//        changeSelectColor(PRE_COLOR, CURRENT_COLOR_DRAW);
 
-        colorPicker.setColorListener(new ColorEnvelopeListener() {
+        bottomSheetColorPicker.getViewBinding().viewColorRed.setOnClickListener(v -> {
+            PRE_COLOR = CURRENT_COLOR_DRAW;
+            CURRENT_COLOR_DRAW = COLOR_RED;
+            changeSelectColor(PRE_COLOR, CURRENT_COLOR_DRAW);
+            drawControllerView.getDrawView().setDrawColor(Color.RED);
+        });
+        bottomSheetColorPicker.getViewBinding().viewColorYellow.setOnClickListener(v -> {
+            PRE_COLOR = CURRENT_COLOR_DRAW;
+            CURRENT_COLOR_DRAW = COLOR_YELLOW;
+            changeSelectColor(PRE_COLOR, CURRENT_COLOR_DRAW);
+            drawControllerView.getDrawView().setDrawColor(Color.YELLOW);
+        });
+        bottomSheetColorPicker.getViewBinding().viewColorGreen.setOnClickListener(v -> {
+            PRE_COLOR = CURRENT_COLOR_DRAW;
+            CURRENT_COLOR_DRAW = COLOR_GREEN;
+            changeSelectColor(PRE_COLOR, CURRENT_COLOR_DRAW);
+            drawControllerView.getDrawView().setDrawColor(Color.GREEN);
+        });
+        bottomSheetColorPicker.getViewBinding().viewColorCyan.setOnClickListener(v -> {
+            PRE_COLOR = CURRENT_COLOR_DRAW;
+            CURRENT_COLOR_DRAW = COLOR_CYAN;
+            changeSelectColor(PRE_COLOR, CURRENT_COLOR_DRAW);
+            drawControllerView.getDrawView().setDrawColor(Color.CYAN);
+        });
+        bottomSheetColorPicker.getViewBinding().viewColorViolet.setOnClickListener(v -> {
+            PRE_COLOR = CURRENT_COLOR_DRAW;
+            CURRENT_COLOR_DRAW = COLOR_BLUE;
+            changeSelectColor(PRE_COLOR, CURRENT_COLOR_DRAW);
+            drawControllerView.getDrawView().setDrawColor(Color.BLUE);
+        });
+        bottomSheetColorPicker.getViewBinding().viewColorWhite.setOnClickListener(v -> {
+            PRE_COLOR = CURRENT_COLOR_DRAW;
+            CURRENT_COLOR_DRAW = COLOR_WHITE;
+            changeSelectColor(PRE_COLOR, CURRENT_COLOR_DRAW);
+            drawControllerView.getDrawView().setDrawColor(Color.WHITE);
+        });
+        bottomSheetColorPicker.getViewBinding().viewColorBlack.setOnClickListener(v -> {
+            PRE_COLOR = CURRENT_COLOR_DRAW;
+            CURRENT_COLOR_DRAW = COLOR_BLACK;
+            changeSelectColor(PRE_COLOR, CURRENT_COLOR_DRAW);
+            drawControllerView.getDrawView().setDrawColor(Color.BLACK);
+        });
+        bottomSheetColorPicker.getViewBinding().viewColorPicker.setOnClickListener(v -> {
+            PRE_COLOR = CURRENT_COLOR_DRAW;
+            CURRENT_COLOR_DRAW=COLOR_PICKER;
+            changeSelectColor(PRE_COLOR, CURRENT_COLOR_DRAW);
+            bottomSheetColorPicker.getViewBinding().colorPickerView.setVisibility(View.VISIBLE);
+        });
+        bottomSheetColorPicker.getViewBinding().imgDone.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                bottomSheetColorPicker.dismiss();
+            }
+        });
+        bottomSheetColorPicker.getViewBinding().colorPickerView.setColorListener(new ColorEnvelopeListener() {
             @Override
             public void onColorSelected(ColorEnvelope envelope, boolean fromUser) {
-
+                drawControllerView.getDrawView().setDrawColor(envelope.getColor());
+                bottomSheetColorPicker.getViewBinding().frStrokeColorPicker.setBackgroundTintList(ColorStateList.valueOf(envelope.getColor()));
             }
         });
 
@@ -502,35 +570,89 @@ public class MyService extends Service implements View.OnTouchListener {
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        int id = v.getId();
 
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    initialX = layoutParams.x;
-                    initialY = layoutParams.y;
-                    initialTouchX = (int) event.getRawX();
-                    initialTouchY = (int) event.getRawY();
-                    break;
-                case MotionEvent.ACTION_UP:
-                    if (event.getRawX() >= dXMax / 2) {
-                        CONTROLLER_STATE_POSITION = RIGHT;
-                        layoutParams.x = dXMax - v.getWidth();
-                        windowManager.updateViewLayout(controllerView, layoutParams);
-                    } else {
-                        CONTROLLER_STATE_POSITION = LEFT;
-                        layoutParams.x = 1;
-                        windowManager.updateViewLayout(controllerView, layoutParams);
-                    }
-                    break;
-                case MotionEvent.ACTION_MOVE:
-                    layoutParams.x = initialX + (int) (event.getRawX() - initialTouchX);
-                    layoutParams.y = initialY + (int) (event.getRawY() - initialTouchY);
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                initialX = layoutParams.x;
+                initialY = layoutParams.y;
+                initialTouchX = (int) event.getRawX();
+                initialTouchY = (int) event.getRawY();
+                break;
+            case MotionEvent.ACTION_UP:
+                if (event.getRawX() >= dXMax / 2) {
+                    CONTROLLER_STATE_POSITION = RIGHT;
+                    layoutParams.x = dXMax - v.getWidth();
                     windowManager.updateViewLayout(controllerView, layoutParams);
-                    break;
-            }
+                } else {
+                    CONTROLLER_STATE_POSITION = LEFT;
+                    layoutParams.x = 1;
+                    windowManager.updateViewLayout(controllerView, layoutParams);
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+                layoutParams.x = initialX + (int) (event.getRawX() - initialTouchX);
+                layoutParams.y = initialY + (int) (event.getRawY() - initialTouchY);
+                windowManager.updateViewLayout(controllerView, layoutParams);
+                break;
+        }
 
 
         return false;
 
+    }
+
+    private void changeSelectColor(int PRE_COLOR, int CURRENT_COLOR_DRAW) {
+        switch (PRE_COLOR) {
+            case COLOR_RED:
+                bottomSheetColorPicker.getViewBinding().frStrokeRed.setBackgroundTintList(ColorStateList.valueOf(Color.TRANSPARENT));
+                break;
+            case COLOR_YELLOW:
+                bottomSheetColorPicker.getViewBinding().frStrokeYellow.setBackgroundTintList(ColorStateList.valueOf(Color.TRANSPARENT));
+                break;
+            case COLOR_GREEN:
+                bottomSheetColorPicker.getViewBinding().frStrokeGreen.setBackgroundTintList(ColorStateList.valueOf(Color.TRANSPARENT));
+                break;
+            case COLOR_CYAN:
+                bottomSheetColorPicker.getViewBinding().frStrokeCyan.setBackgroundTintList(ColorStateList.valueOf(Color.TRANSPARENT));
+                break;
+            case COLOR_BLUE:
+                bottomSheetColorPicker.getViewBinding().frStrokeViolet.setBackgroundTintList(ColorStateList.valueOf(Color.TRANSPARENT));
+                break;
+            case COLOR_WHITE:
+                bottomSheetColorPicker.getViewBinding().frStrokeWhite.setBackgroundTintList(ColorStateList.valueOf(Color.TRANSPARENT));
+                break;
+            case COLOR_BLACK:
+                bottomSheetColorPicker.getViewBinding().frStrokeBlack.setBackgroundTintList(ColorStateList.valueOf(Color.TRANSPARENT));
+                break;
+            case COLOR_PICKER:
+                bottomSheetColorPicker.getViewBinding().frStrokeColorPicker.setBackgroundTintList(ColorStateList.valueOf(Color.TRANSPARENT));
+                break;
+        }
+        switch (CURRENT_COLOR_DRAW) {
+            case COLOR_RED:
+                bottomSheetColorPicker.getViewBinding().frStrokeRed.setBackgroundTintList(ColorStateList.valueOf(Color.GRAY));
+                break;
+            case COLOR_YELLOW:
+                bottomSheetColorPicker.getViewBinding().frStrokeYellow.setBackgroundTintList(ColorStateList.valueOf(Color.GRAY));
+                break;
+            case COLOR_GREEN:
+                bottomSheetColorPicker.getViewBinding().frStrokeGreen.setBackgroundTintList(ColorStateList.valueOf(Color.GRAY));
+                break;
+            case COLOR_CYAN:
+                bottomSheetColorPicker.getViewBinding().frStrokeCyan.setBackgroundTintList(ColorStateList.valueOf(Color.GRAY));
+                break;
+            case COLOR_BLUE:
+                bottomSheetColorPicker.getViewBinding().frStrokeViolet.setBackgroundTintList(ColorStateList.valueOf(Color.GRAY));
+                break;
+            case COLOR_WHITE:
+                bottomSheetColorPicker.getViewBinding().frStrokeWhite.setBackgroundTintList(ColorStateList.valueOf(Color.GRAY));
+                break;
+            case COLOR_BLACK:
+                bottomSheetColorPicker.getViewBinding().frStrokeBlack.setBackgroundTintList(ColorStateList.valueOf(Color.GRAY));
+                break;
+            case COLOR_PICKER:
+                bottomSheetColorPicker.getViewBinding().frStrokeColorPicker.setBackgroundTintList(ColorStateList.valueOf(Color.GRAY));
+                break;
+        }
     }
 }
