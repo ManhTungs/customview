@@ -10,12 +10,11 @@
         android:id="@+id/draw_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:dv_draw_width="10"
-        app:dv_draw_corners="butt"
+        app:dv_draw_width="5"
+        app:dv_draw_corners="round"
         app:dv_draw_style="stroke"
         app:dv_draw_dither="true"
-        android:background="@color/color_transparent"
-        />
+        android:background="@color/color_transparent" />
     <LinearLayout
         android:layout_gravity="bottom|end"
         android:id="@+id/draw_controller"

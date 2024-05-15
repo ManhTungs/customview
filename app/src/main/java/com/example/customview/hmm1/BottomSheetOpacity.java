@@ -3,7 +3,6 @@ package com.example.customview.hmm1;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
-import android.view.View;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
@@ -11,16 +10,16 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatDialog;
 
-import com.example.customview.databinding.LayoutBottomSheetPenSizeBinding;
+import com.example.customview.databinding.LayoutBottomSheetOpacityBinding;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.mct.base.ui.binding.BaseBindingOverlayDialog;
 
-public class BottomSheetPenSize extends BaseBindingOverlayDialog<LayoutBottomSheetPenSizeBinding> {
+public class BottomSheetOpacity extends BaseBindingOverlayDialog<LayoutBottomSheetOpacityBinding> {
     @Override
-    public Class<LayoutBottomSheetPenSizeBinding> getBindingClass() {
-        return LayoutBottomSheetPenSizeBinding.class;
+    public Class<LayoutBottomSheetOpacityBinding> getBindingClass() {
+        return LayoutBottomSheetOpacityBinding.class;
     }
-    public BottomSheetPenSize(@NonNull Context context) {
+    public BottomSheetOpacity(@NonNull Context context) {
         super(context);
     }
 
@@ -40,13 +39,7 @@ public class BottomSheetPenSize extends BaseBindingOverlayDialog<LayoutBottomShe
                 .build();
     }
 
-    @Override
-    protected void onDialogCreated(@NonNull AppCompatDialog dialog, DialogOption dialogOption, View view) {
-        super.onDialogCreated(dialog, dialogOption, view);
-        dialog.setCancelable(false);
-    }
-
-    public LayoutBottomSheetPenSizeBinding getBinding(){
+    public LayoutBottomSheetOpacityBinding getBinding(){
         return binding;
     }
 }

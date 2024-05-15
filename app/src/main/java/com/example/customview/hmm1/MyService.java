@@ -2,12 +2,16 @@ package com.example.customview.hmm1;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.content.res.ColorStateList;
@@ -22,6 +26,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
 
@@ -35,6 +40,9 @@ import com.byox.drawview.enums.DrawingTool;
 import com.example.customview.R;
 import com.skydoves.colorpickerview.ColorEnvelope;
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener;
+import com.warkiz.widget.IndicatorSeekBar;
+import com.warkiz.widget.OnSeekChangeListener;
+import com.warkiz.widget.SeekParams;
 
 public class MyService extends Service implements View.OnTouchListener {
     private static final int COLOR_RED = 1, COLOR_YELLOW = 2, COLOR_GREEN = 3, COLOR_BLUE = 4, COLOR_WHITE = 5, COLOR_BLACK = 6, COLOR_CYAN = 7, COLOR_PICKER = 8;
@@ -45,12 +53,15 @@ public class MyService extends Service implements View.OnTouchListener {
     private static int CONTROLLER_STATE_POSITION = LEFT;
     private static int CONTROLLER_STATE = 2;
     private BottomSheetColorPicker bottomSheetColorPicker;
+    private BottomSheetPenSize bottomSheetPenSize;
+    private BottomSheetOpacity bottomSheetOpacity;
     int dXMax;
     int dYMAX;
     int initialX;
     int initialY;
     int initialTouchX;
     int initialTouchY;
+    public static Window window;
     RelativeLayout rlOverlay;
     WindowManager windowManager;
     WindowManager.LayoutParams layoutParams, layoutParams1, layoutParams2, layoutParams3, layoutParams4, drawControllerLayoutParam, colorPickerLayoutParam;
@@ -60,6 +71,16 @@ public class MyService extends Service implements View.OnTouchListener {
     public static final String CHANNEL_ID = "record_channel";
     private static CharSequence CHANNEL_NAME = "record_channel_name";
     public static final int NOTIFICATION_ID = 1;
+
+    private BroadcastReceiver mBR = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+//            String action = intent.getAction();
+//            ScreenShot.takeScreenshot(context,);
+
+        }
+    } ;
+
 
 
     @Override
@@ -73,6 +94,18 @@ public class MyService extends Service implements View.OnTouchListener {
 
         initViewOverlay();
         return START_STICKY;
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        registerBroadcastReceiver();
+    }
+
+    private void registerBroadcastReceiver() {
+        IntentFilter intentFilter = new IntentFilter("hahaha");
+        registerReceiver(mBR,intentFilter);
+
     }
 
     private void initViewOverlay() {
@@ -171,7 +204,16 @@ public class MyService extends Service implements View.OnTouchListener {
         });
         drawControllerView.getImgPenSize().setOnClickListener(v -> {
 //            drawControllerView.getDrawView().setDrawWidth(100);
+            if (bottomSheetPenSize==null){
+                Context context = new ContextThemeWrapper(this, R.style.Theme_Customview);
+                bottomSheetPenSize = new BottomSheetPenSize(context);
+                bottomSheetPenSize.show();
+                initViewPenSize(bottomSheetPenSize);
+            }else {
+                bottomSheetPenSize.show();
+            }
         });
+
         drawControllerView.getImgBrush().setOnClickListener(v -> {
             drawControllerView.getDrawView().setDrawingMode(DrawingMode.DRAW);
             drawControllerView.getDrawView().setDrawingTool(DrawingTool.PEN);
@@ -188,11 +230,42 @@ public class MyService extends Service implements View.OnTouchListener {
             drawControllerView.getDrawView().restartDrawing();
         });
         drawControllerView.getImgAlpha().setOnClickListener(v -> {
-//            drawControllerView.getDrawView().cam
-//            drawControllerView.getDrawView().setDrawAlpha();
+            if (bottomSheetOpacity==null){
+                Context context = new ContextThemeWrapper(this, R.style.Theme_Customview);
+                bottomSheetOpacity=new BottomSheetOpacity(context);
+                bottomSheetOpacity.show();
+                initViewOpacity(bottomSheetOpacity);
+            }else {
+                bottomSheetOpacity.show();
+            }
 
         });
 
+    }
+
+    private void initViewOpacity(BottomSheetOpacity bottomSheetOpacity) {
+        bottomSheetOpacity.getBinding().icDone.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                bottomSheetOpacity.dismiss();
+            }
+        });
+        bottomSheetOpacity.getBinding().seekbarOfFragmentEditWatermark.setOnSeekChangeListener(new OnSeekChangeListener() {
+            @Override
+            public void onSeeking(SeekParams seekParams) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(IndicatorSeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(IndicatorSeekBar seekBar) {
+                drawControllerView.getDrawView().setDrawAlpha(seekBar.getProgress());
+            }
+        });
     }
 
     private void initViewColorPicker(BottomSheetColorPicker bottomSheetColorPicker) {
@@ -270,6 +343,27 @@ public class MyService extends Service implements View.OnTouchListener {
             }
         });
 
+    }
+    private void initViewPenSize(BottomSheetPenSize bottomSheetPenSize) {
+        bottomSheetPenSize.getBinding().seekbarOfFragmentEditWatermark.setOnSeekChangeListener(new OnSeekChangeListener() {
+            @Override
+            public void onSeeking(SeekParams seekParams) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(IndicatorSeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(IndicatorSeekBar seekBar) {
+                drawControllerView.getDrawView().setDrawWidth(seekBar.getProgress());
+            }
+        });
+        bottomSheetPenSize.getBinding().icDone.setOnClickListener(v -> {
+            bottomSheetPenSize.dismiss();
+        });
     }
 
     private void initOptionController() {
@@ -514,8 +608,9 @@ public class MyService extends Service implements View.OnTouchListener {
         controllerView3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.e("dfdf", "onClick: option3");
-
+//                Log.e("dfdf", "onClick: screen shot" );
+                sendActionScreenShot();
+//                ScreenShot.takeScreenshot();
             }
         });
         controllerView4.setOnClickListener(new View.OnClickListener() {
@@ -532,6 +627,19 @@ public class MyService extends Service implements View.OnTouchListener {
             }
         });
 
+    }
+
+    private void sendActionScreenShot() {
+////        Intent intent = null;
+////        intent = new Intent(this, MyReceiver.class);
+////        intent.putExtra("screen_shot",1);
+////        assert intent != null;
+////        return PendingIntent.getBroadcast(this,1,intent,PendingIntent.FLAG_MUTABLE);
+//        Log.e("dfdf", "sendActionScreenShot in service: " );
+//        Intent intent = new Intent("hahaha");
+//        intent.putExtra("screen_shot", 1);
+//        sendBroadcast(intent);
+        ScreenShot.takeScreenshot(this,window);
     }
 
 
