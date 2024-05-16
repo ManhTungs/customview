@@ -17,6 +17,7 @@ import android.content.pm.ServiceInfo;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.DisplayMetrics;
@@ -34,17 +35,20 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.LifecycleService;
 
 import com.byox.drawview.enums.DrawingMode;
 import com.byox.drawview.enums.DrawingTool;
 import com.example.customview.R;
+import com.otaliastudios.cameraview.gesture.Gesture;
 import com.skydoves.colorpickerview.ColorEnvelope;
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener;
 import com.warkiz.widget.IndicatorSeekBar;
 import com.warkiz.widget.OnSeekChangeListener;
 import com.warkiz.widget.SeekParams;
 
-public class MyService extends Service implements View.OnTouchListener {
+public class MyService extends LifecycleService implements View.OnTouchListener {
     private static final int COLOR_RED = 1, COLOR_YELLOW = 2, COLOR_GREEN = 3, COLOR_BLUE = 4, COLOR_WHITE = 5, COLOR_BLACK = 6, COLOR_CYAN = 7, COLOR_PICKER = 8;
     private static int CURRENT_COLOR_DRAW = COLOR_BLACK;
     private static int PRE_COLOR = COLOR_BLACK;
@@ -55,6 +59,12 @@ public class MyService extends Service implements View.OnTouchListener {
     private BottomSheetColorPicker bottomSheetColorPicker;
     private BottomSheetPenSize bottomSheetPenSize;
     private BottomSheetOpacity bottomSheetOpacity;
+    private CustomCameraView customCameraView;
+    int deltaX;
+    float lastX;
+    float lastY;
+    int deltaY;
+
     int dXMax;
     int dYMAX;
     int initialX;
@@ -64,7 +74,7 @@ public class MyService extends Service implements View.OnTouchListener {
     public static Window window;
     RelativeLayout rlOverlay;
     WindowManager windowManager;
-    WindowManager.LayoutParams layoutParams, layoutParams1, layoutParams2, layoutParams3, layoutParams4, drawControllerLayoutParam, colorPickerLayoutParam;
+    WindowManager.LayoutParams layoutParams, layoutParams1, layoutParams2, layoutParams3, layoutParams4, drawControllerLayoutParam, colorPickerLayoutParam,cameraLayoutParams;
     DrawControllerView drawControllerView;
     ControllerView controllerView;
     private ActionView controllerView1, controllerView2, controllerView3, controllerView4;
@@ -85,7 +95,7 @@ public class MyService extends Service implements View.OnTouchListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
+        super.onStartCommand(intent, flags, startId);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIFICATION_ID, sendNotificationDefault(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION);
         } else {
@@ -601,8 +611,13 @@ public class MyService extends Service implements View.OnTouchListener {
         controllerView2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.e("dfdf", "onClick: option2");
-
+                openCamera();
+                CONTROLLER_STATE = CONTROLLER_NON_SELECT;
+                windowManager.removeView(rlOverlay);
+                windowManager.removeView(controllerView1);
+                windowManager.removeView(controllerView2);
+                windowManager.removeView(controllerView3);
+                windowManager.removeView(controllerView4);
             }
         });
         controllerView3.setOnClickListener(new View.OnClickListener() {
@@ -629,6 +644,74 @@ public class MyService extends Service implements View.OnTouchListener {
 
     }
 
+    private void openCamera() {
+            cameraLayoutParams = new WindowManager.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                    PixelFormat.TRANSLUCENT
+            );
+
+            cameraLayoutParams.format = PixelFormat.TRANSLUCENT;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                cameraLayoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+            } else {
+                cameraLayoutParams.type = WindowManager.LayoutParams.TYPE_PHONE;
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                cameraLayoutParams.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+            }
+            cameraLayoutParams.gravity = Gravity.START;
+            cameraLayoutParams.flags |= WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
+            cameraLayoutParams.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+
+
+            customCameraView=new CustomCameraView(MyService.this);
+            customCameraView.setListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    Log.e("dfdf", "onTouch: ");
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            initialX = layoutParams.x;
+                            initialY = layoutParams.y;
+                            initialTouchX = (int) event.getRawX();
+                            initialTouchY = (int) event.getRawY();
+                            break;
+                        case MotionEvent.ACTION_UP:
+                            if (event.getRawX() >= dXMax / 2f) {
+                                CONTROLLER_STATE_POSITION = RIGHT;
+                                layoutParams.x = dXMax - v.getWidth();
+                                windowManager.updateViewLayout(customCameraView, layoutParams);
+                            } else {
+                                CONTROLLER_STATE_POSITION = LEFT;
+                                layoutParams.x = 1;
+                                windowManager.updateViewLayout(customCameraView, layoutParams);
+                            }
+                            break;
+                        case MotionEvent.ACTION_MOVE:
+                            layoutParams.x = initialX + (int) (event.getRawX() - initialTouchX);
+                            layoutParams.y = initialY + (int) (event.getRawY() - initialTouchY);
+                            windowManager.updateViewLayout(customCameraView, layoutParams);
+                            break;
+                    }
+                    return false;
+                }
+            });
+            customCameraView.getCameraView().setLifecycleOwner(null);
+            customCameraView.getCameraView().open();
+            windowManager.addView(customCameraView,cameraLayoutParams);
+
+
+            customCameraView.getImgCancel().setOnClickListener(v -> {
+                windowManager.removeView(customCameraView);
+            });
+
+
+
+
+    }
+
     private void sendActionScreenShot() {
 ////        Intent intent = null;
 ////        intent = new Intent(this, MyReceiver.class);
@@ -639,13 +722,14 @@ public class MyService extends Service implements View.OnTouchListener {
 //        Intent intent = new Intent("hahaha");
 //        intent.putExtra("screen_shot", 1);
 //        sendBroadcast(intent);
-        ScreenShot.takeScreenshot(this,window);
+//        ScreenShot.takeScreenshot(this,window);
     }
 
 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
+        super.onBind(intent);
         return null;
     }
 
@@ -678,7 +762,6 @@ public class MyService extends Service implements View.OnTouchListener {
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 initialX = layoutParams.x;

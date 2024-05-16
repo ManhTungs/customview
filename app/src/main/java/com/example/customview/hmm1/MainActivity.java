@@ -17,6 +17,7 @@ import android.widget.Button;
 
 import com.byox.drawview.views.DrawView;
 import com.example.customview.R;
+import com.otaliastudios.cameraview.CameraView;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -25,7 +26,7 @@ import org.greenrobot.eventbus.ThreadMode;
 public class MainActivity extends AppCompatActivity {
 
     int MY_REQUEST_CODE = 999;
-    DrawView drawView;
+
     private static final int REQUEST_MANAGE_EXTERNAL_STORAGE = 100;
 
     @Override
