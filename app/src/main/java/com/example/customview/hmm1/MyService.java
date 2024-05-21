@@ -48,7 +48,7 @@ import com.warkiz.widget.IndicatorSeekBar;
 import com.warkiz.widget.OnSeekChangeListener;
 import com.warkiz.widget.SeekParams;
 
-public class MyService extends LifecycleService implements View.OnTouchListener {
+public class MyService extends Service implements View.OnTouchListener {
     private static final int COLOR_RED = 1, COLOR_YELLOW = 2, COLOR_GREEN = 3, COLOR_BLUE = 4, COLOR_WHITE = 5, COLOR_BLACK = 6, COLOR_CYAN = 7, COLOR_PICKER = 8;
     private static int CURRENT_COLOR_DRAW = COLOR_BLACK;
     private static int PRE_COLOR = COLOR_BLACK;
@@ -64,34 +64,31 @@ public class MyService extends LifecycleService implements View.OnTouchListener 
     float lastX;
     float lastY;
     int deltaY;
-
+    int initialWidth;
+    int initialHeight;
+    int initialTouchXCameraView;
+    int initialTouchYCameraView;
     int dXMax;
     int dYMAX;
     int initialX;
     int initialY;
     int initialTouchX;
     int initialTouchY;
+    int initialXCustomCameraView;
+    int initialYCustomCameraView;
+    int initialTouchXCustomCameraView;
+    int initialTouchYCustomCameraView;
     public static Window window;
     RelativeLayout rlOverlay;
     WindowManager windowManager;
-    WindowManager.LayoutParams layoutParams, layoutParams1, layoutParams2, layoutParams3, layoutParams4, drawControllerLayoutParam, colorPickerLayoutParam,cameraLayoutParams;
+    WindowManager.LayoutParams layoutParams, layoutParams1, layoutParams2, layoutParams3, layoutParams4, drawControllerLayoutParam, colorPickerLayoutParam, cameraLayoutParams,trashViewLayoutParams;
     DrawControllerView drawControllerView;
+    CustomTrashView trashView;
     ControllerView controllerView;
     private ActionView controllerView1, controllerView2, controllerView3, controllerView4;
     public static final String CHANNEL_ID = "record_channel";
     private static CharSequence CHANNEL_NAME = "record_channel_name";
     public static final int NOTIFICATION_ID = 1;
-
-    private BroadcastReceiver mBR = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-//            String action = intent.getAction();
-//            ScreenShot.takeScreenshot(context,);
-
-        }
-    } ;
-
-
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -109,13 +106,6 @@ public class MyService extends LifecycleService implements View.OnTouchListener 
     @Override
     public void onCreate() {
         super.onCreate();
-        registerBroadcastReceiver();
-    }
-
-    private void registerBroadcastReceiver() {
-        IntentFilter intentFilter = new IntentFilter("hahaha");
-        registerReceiver(mBR,intentFilter);
-
     }
 
     private void initViewOverlay() {
@@ -129,11 +119,38 @@ public class MyService extends LifecycleService implements View.OnTouchListener 
 
         dXMax = displayMetrics.widthPixels;
         dYMAX = displayMetrics.heightPixels;
+
+
         initControllerParams();
+        initTrashViewParams();
         initOptionController();
         initDrawController();
         initColorPickerParams();
         initOnClick();
+    }
+
+    private void initTrashViewParams() {
+        trashViewLayoutParams = new WindowManager.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                PixelFormat.TRANSLUCENT
+        );
+
+        trashViewLayoutParams.format = PixelFormat.TRANSLUCENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            trashViewLayoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            trashViewLayoutParams.type = WindowManager.LayoutParams.TYPE_PHONE;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            trashViewLayoutParams.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+        }
+        trashViewLayoutParams.gravity = Gravity.CENTER;
+        trashViewLayoutParams.flags |= WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
+        trashViewLayoutParams.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+
+        trashView=new CustomTrashView(this);
     }
 
     private void initColorPickerParams() {
@@ -162,7 +179,7 @@ public class MyService extends LifecycleService implements View.OnTouchListener 
 
     @SuppressLint("ClickableViewAccessibility")
     private void initDrawController() {
-        if (drawControllerView==null){
+        if (drawControllerView == null) {
             drawControllerView = new DrawControllerView(this);
             drawControllerView.getDrawView().setDrawColor(Color.BLACK);
         }
@@ -203,23 +220,23 @@ public class MyService extends LifecycleService implements View.OnTouchListener 
             drawControllerView.getDrawView().setDrawingMode(DrawingMode.ERASER);
         });
         drawControllerView.getImgMultiColor().setOnClickListener(v -> {
-            if (bottomSheetColorPicker==null){
+            if (bottomSheetColorPicker == null) {
                 Context context = new ContextThemeWrapper(this, R.style.Theme_Customview);
                 bottomSheetColorPicker = new BottomSheetColorPicker(context);
                 bottomSheetColorPicker.show();
                 initViewColorPicker(bottomSheetColorPicker);
-            }else {
+            } else {
                 bottomSheetColorPicker.show();
             }
         });
         drawControllerView.getImgPenSize().setOnClickListener(v -> {
 //            drawControllerView.getDrawView().setDrawWidth(100);
-            if (bottomSheetPenSize==null){
+            if (bottomSheetPenSize == null) {
                 Context context = new ContextThemeWrapper(this, R.style.Theme_Customview);
                 bottomSheetPenSize = new BottomSheetPenSize(context);
                 bottomSheetPenSize.show();
                 initViewPenSize(bottomSheetPenSize);
-            }else {
+            } else {
                 bottomSheetPenSize.show();
             }
         });
@@ -240,12 +257,12 @@ public class MyService extends LifecycleService implements View.OnTouchListener 
             drawControllerView.getDrawView().restartDrawing();
         });
         drawControllerView.getImgAlpha().setOnClickListener(v -> {
-            if (bottomSheetOpacity==null){
+            if (bottomSheetOpacity == null) {
                 Context context = new ContextThemeWrapper(this, R.style.Theme_Customview);
-                bottomSheetOpacity=new BottomSheetOpacity(context);
+                bottomSheetOpacity = new BottomSheetOpacity(context);
                 bottomSheetOpacity.show();
                 initViewOpacity(bottomSheetOpacity);
-            }else {
+            } else {
                 bottomSheetOpacity.show();
             }
 
@@ -335,7 +352,7 @@ public class MyService extends LifecycleService implements View.OnTouchListener 
         });
         bottomSheetColorPicker.getViewBinding().viewColorPicker.setOnClickListener(v -> {
             PRE_COLOR = CURRENT_COLOR_DRAW;
-            CURRENT_COLOR_DRAW=COLOR_PICKER;
+            CURRENT_COLOR_DRAW = COLOR_PICKER;
             changeSelectColor(PRE_COLOR, CURRENT_COLOR_DRAW);
             bottomSheetColorPicker.getViewBinding().colorPickerView.setVisibility(View.VISIBLE);
         });
@@ -354,6 +371,7 @@ public class MyService extends LifecycleService implements View.OnTouchListener 
         });
 
     }
+
     private void initViewPenSize(BottomSheetPenSize bottomSheetPenSize) {
         bottomSheetPenSize.getBinding().seekbarOfFragmentEditWatermark.setOnSeekChangeListener(new OnSeekChangeListener() {
             @Override
@@ -532,7 +550,6 @@ public class MyService extends LifecycleService implements View.OnTouchListener 
                     layoutParamsOverlay.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
                     rlOverlay.setBackgroundColor(getResources().getColor(R.color.black));
 
-
                     windowManager.removeView(controllerView);
                     windowManager.addView(rlOverlay, layoutParamsOverlay);
                     windowManager.addView(controllerView, layoutParams);
@@ -644,70 +661,93 @@ public class MyService extends LifecycleService implements View.OnTouchListener 
 
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void openCamera() {
-            cameraLayoutParams = new WindowManager.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
-                    WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-                    PixelFormat.TRANSLUCENT
-            );
+        cameraLayoutParams = new WindowManager.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                PixelFormat.TRANSLUCENT
+        );
 
-            cameraLayoutParams.format = PixelFormat.TRANSLUCENT;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                cameraLayoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
-            } else {
-                cameraLayoutParams.type = WindowManager.LayoutParams.TYPE_PHONE;
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                cameraLayoutParams.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
-            }
-            cameraLayoutParams.gravity = Gravity.START;
-            cameraLayoutParams.flags |= WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
-            cameraLayoutParams.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+        cameraLayoutParams.format = PixelFormat.TRANSLUCENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            cameraLayoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            cameraLayoutParams.type = WindowManager.LayoutParams.TYPE_PHONE;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            cameraLayoutParams.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+        }
+        cameraLayoutParams.gravity = Gravity.START;
+        cameraLayoutParams.flags |= WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
+        cameraLayoutParams.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+        cameraLayoutParams.flags |= WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
 
 
-            customCameraView=new CustomCameraView(MyService.this);
-            customCameraView.setListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    Log.e("dfdf", "onTouch: ");
-                    switch (event.getAction()) {
-                        case MotionEvent.ACTION_DOWN:
-                            initialX = layoutParams.x;
-                            initialY = layoutParams.y;
-                            initialTouchX = (int) event.getRawX();
-                            initialTouchY = (int) event.getRawY();
-                            break;
-                        case MotionEvent.ACTION_UP:
-                            if (event.getRawX() >= dXMax / 2f) {
-                                CONTROLLER_STATE_POSITION = RIGHT;
-                                layoutParams.x = dXMax - v.getWidth();
-                                windowManager.updateViewLayout(customCameraView, layoutParams);
-                            } else {
-                                CONTROLLER_STATE_POSITION = LEFT;
-                                layoutParams.x = 1;
-                                windowManager.updateViewLayout(customCameraView, layoutParams);
-                            }
-                            break;
-                        case MotionEvent.ACTION_MOVE:
-                            layoutParams.x = initialX + (int) (event.getRawX() - initialTouchX);
-                            layoutParams.y = initialY + (int) (event.getRawY() - initialTouchY);
-                            windowManager.updateViewLayout(customCameraView, layoutParams);
-                            break;
-                    }
-                    return false;
+
+        customCameraView = new CustomCameraView(MyService.this);
+        customCameraView.setListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        initialXCustomCameraView = cameraLayoutParams.x;
+                        initialYCustomCameraView = cameraLayoutParams.y;
+                        initialTouchXCustomCameraView = (int) event.getRawX();
+                        initialTouchYCustomCameraView = (int) event.getRawY();
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        cameraLayoutParams.x = initialXCustomCameraView + (int) (event.getRawX() - initialTouchXCustomCameraView);
+                        cameraLayoutParams.y = initialYCustomCameraView + (int) (event.getRawY() - initialTouchYCustomCameraView);
+                        windowManager.updateViewLayout(customCameraView, cameraLayoutParams);
+                        break;
                 }
-            });
-            customCameraView.getCameraView().setLifecycleOwner(null);
-            customCameraView.getCameraView().open();
-            windowManager.addView(customCameraView,cameraLayoutParams);
+                return false;
+            }
+        });
+        customCameraView.getCameraView().setLifecycleOwner(null);
+        customCameraView.getCameraView().open();
+        windowManager.addView(customCameraView, cameraLayoutParams);
 
 
-            customCameraView.getImgCancel().setOnClickListener(v -> {
-                windowManager.removeView(customCameraView);
-            });
+        customCameraView.getImgCancel().setOnClickListener(v -> {
+            windowManager.removeView(customCameraView);
+        });
 
+        customCameraView.getImgExpand().setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        // Lưu lại kích thước ban đầu và tọa độ chạm ban đầu
+                        initialWidth = customCameraView.getWidth();
+                        initialHeight = customCameraView.getHeight();
+                        initialTouchXCameraView = (int) event.getRawX();
+                        initialTouchYCameraView = (int) event.getRawY();
+                        return true;
 
+                    case MotionEvent.ACTION_MOVE:
+                        // Tính toán kích thước mới
+                        int newWidth = initialWidth + (int) (event.getRawX() - initialTouchXCameraView);
+                        int newHeight = initialHeight + (int) (event.getRawY() - initialTouchYCameraView);
+
+                        // Đảm bảo kích thước tối thiểu
+                        if (newWidth > 350 && newHeight > 350 && newWidth < 700 && newHeight < 700   ) {
+                            cameraLayoutParams.width = newWidth;
+                            cameraLayoutParams.height = newWidth;
+//
+//                                cameraLayoutParams = new RelativeLayout.LayoutParams(newWidth, newHeight);
+//                                cameraLayoutParams.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
+//                                v.setLayoutParams(layoutParams);
+                            windowManager.updateViewLayout(customCameraView, cameraLayoutParams);
+                        }
+                        return true;
+                }
+                return false;
+            }
+        });
 
 
     }
@@ -729,7 +769,6 @@ public class MyService extends LifecycleService implements View.OnTouchListener 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        super.onBind(intent);
         return null;
     }
 
@@ -779,15 +818,23 @@ public class MyService extends LifecycleService implements View.OnTouchListener 
                     layoutParams.x = 1;
                     windowManager.updateViewLayout(controllerView, layoutParams);
                 }
+
+                if (trashView.getParent()==null){
+                    windowManager.addView(trashView,trashViewLayoutParams);
+                }
+
                 break;
             case MotionEvent.ACTION_MOVE:
                 layoutParams.x = initialX + (int) (event.getRawX() - initialTouchX);
                 layoutParams.y = initialY + (int) (event.getRawY() - initialTouchY);
                 windowManager.updateViewLayout(controllerView, layoutParams);
+
+
+                if (trashView.getParent()==null){
+                    windowManager.addView(trashView,trashViewLayoutParams);
+                }
                 break;
         }
-
-
         return false;
 
     }
